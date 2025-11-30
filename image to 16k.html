@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upscaler to 16K</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-bar-fill {
+            height: 20px;
+            width: 0;
+            background-color: #4caf50;
+            transition: width 0.3s;
+        }
+
+        #output-image {
+            margin: 20px 0;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Upscaler to 16K</h1>
+    <input type="file" id="upload" accept="image/*" />
+    <div class="progress-bar" id="progress-bar">
+        <div class="progress-bar-fill" id="progress-bar-fill"></div>
+    </div>
+    <button id="download" style="display: none;">Download Upscaled Image</button>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="output-image" alt="Upscaled image will appear here" />
+
+    <script>
+        const uploadInput = document.getElementById('upload');
+        const progressBar = document.getElementById('progress-bar-fill');
+        const downloadButton = document.getElementById('download');
+        const canvas = document.getElementById('canvas');
+        const outputImage = document.getElementById('output-image');
+
+        uploadInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+
+            if (!file) return;
+
+            const fileName = file.name.split('.');
+            const baseName = fileName.slice(0, -1).join('.');
+            const extension = fileName[fileName.length - 1];
+
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+
+            img.onload = () => {
+                const ctx = canvas.getContext('2d');
+
+                // Maintain aspect ratio
+                const aspectRatio = img.width / img.height;
+                let targetWidth = 15360;
+                let targetHeight = 8640;
+
+                if (aspectRatio > 1) {
+                    targetHeight = targetWidth / aspectRatio;
+                } else {
+                    targetWidth = targetHeight * aspectRatio;
+                }
+
+                // Set canvas dimensions
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+
+                // Display progress bar animation
+                progressBar.style.width = '30%';
+
+                // Draw image maintaining aspect ratio
+                ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                progressBar.style.width = '70%';
+
+                // Convert canvas to image
+                const upscaledImageUrl = canvas.toDataURL('image/jpeg');
+                outputImage.src = upscaledImageUrl;
+                progressBar.style.width = '100%';
+
+                // Enable download button
+                downloadButton.style.display = 'block';
+                downloadButton.onclick = () => {
+                    const link = document.createElement('a');
+                    link.href = upscaledImageUrl;
+                    link.download = `${baseName}-16k.${extension}`;
+                    link.click();
+                };
+            };
+        });
+    </script>
+</body>
+</html>
